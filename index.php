@@ -1,12 +1,19 @@
 <?php
 
-// Plugin name: Stripe Services & Goods Marketplace
+// Plugin name: Goods & Services Stripe Marketplace 
 
 $plugin_url = WP_PLUGIN_DIR;
 $plugin_url = str_replace('/', '\\', $plugin_url);
-require_once $plugin_url . '\marketplace\inc\stripe\init.php';
+require_once $plugin_url . '\gssm\inc\stripe\init.php';
+
+define('GSSM_STRIPE_PUBLIC', 'sk_test_51N9a3qFcAW2surlwPRHvtD7fxctLrDQvYdQrTOflchg66Etk1VJMz5fSdX906dxz1gCnMIHSewXeIYG2PgTSST2o006jdKU3Cd');
+define('GSSM_CLIENT_ID', 'ca_NvQvRUbTRYyiuGtDHimtqBNfnnLCHIwx');
+define('GSSM_REDIRECT_URI', 'http://localhost/store/wp-json/gssm/v1/endpoint');
 
 include 'classes\WooCustomCheckout.php';
+include 'classes\gssmStripe.php';
+include 'classes\gssmRender.php';
+
 
 /********************
 *** ENQUEUE
@@ -71,32 +78,3 @@ add_filter( 'template_include', 'my_plugin_change_template' );
 ********************/
 
 add_filter('use_block_editor_for_post', '__return_false', 10);
-
-
-
-function display_images_in_comments($comment_text) {
-    // The regular expression for URL
-    $pattern = '/(https?:\/\/[^\s]+)/i';
-
-    // Find matches
-    if (preg_match_all($pattern, $comment_text, $matches)) {
-        foreach ($matches[0] as $match) {
-
-            // Remove <a> tags
-            $match = str_replace('"', '', $match);
-            $match = str_replace("'", '', $match);
-
-            $extensions = array('jpg', 'jpeg', 'gif', 'png', 'svg');
-            $url_extension = pathinfo(parse_url($match, PHP_URL_PATH), PATHINFO_EXTENSION);
-
-            if (in_array($url_extension, $extensions)) {
-                $comment_text .= "<img src='$match'/>";
-            }
-
-
-        }
-    }
-    
-    return $comment_text;
-}
-add_filter('comment_text', 'display_images_in_comments');
