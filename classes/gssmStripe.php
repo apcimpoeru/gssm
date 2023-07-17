@@ -1,6 +1,6 @@
 <?php
 
-class gssmStripe {
+class GssmStripe {
     
     private $apiKey;
 
@@ -47,17 +47,27 @@ class gssmStripe {
         $user_id = $this->get_user_id_from_state($state);
 
         $stripe_account = $this->confirm_stripe_account($code);
+        $error = false;
 
         if ( $stripe_account ){
             update_user_meta($user_id, 'gssm_stripe_account', $stripe_account);
         } else {
             // TODO
             // Error handling
+            $error = true;
         }
         
-        $response = array(
-            'message' => $stripe_account,
-        );
+        if ($error){
+            $response = array(
+                'success' => 0
+            );
+        } else {
+            $response = array(
+                'success' => 1,
+                'message' => $stripe_account,
+            );
+        }
+        
 
         return new WP_REST_Response($response, 200);
 
@@ -90,13 +100,15 @@ class gssmStripe {
         $user_state = get_user_meta($userID, 'gssm_stripe_state');
         $stripe_account = get_user_meta($userID, 'gssm_stripe_account');
 
-        if ($stripe_account){
-            return false;
+        if ( !$userID ){
+            return 'not_logged_in';
+        }
+        if ( $stripe_account ){
+            return 'stripe_account';
         }
 
-        $user_state = $user_state[0];
-
         if (!$user_state){
+            $user_state = $user_state[0];
             do {
                 // Generate a new identifier
                 $state = bin2hex(random_bytes(15));
@@ -112,12 +124,14 @@ class gssmStripe {
             } while (!empty($users));
 
             update_user_meta($userID, 'gssm_stripe_state', $state);
+            
         } else {
             $state = $user_state;
         }
 
         $clientId = GSSM_CLIENT_ID; 
         $redirectUri = GSSM_REDIRECT_URI; 
+        $state = $state[0];
 
         $url = "https://connect.stripe.com/oauth/authorize?response_type=code&client_id=$clientId&scope=read_write&redirect_uri=$redirectUri&state=$state";
 
@@ -126,3 +140,5 @@ class gssmStripe {
     }
 
 }
+
+// $gssmStripe = new gssmStripe(GSSM_STRIPE_PUBLIC);
